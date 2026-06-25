@@ -1,0 +1,37 @@
+﻿### Get all announcements
+GET http://localhost:3000/announcements
+
+### Get announcements with search
+GET http://localhost:3000/announcements?search=phone
+
+### Get announcements sorted by oldest
+GET http://localhost:3000/announcements?sort=oldest
+
+### Get announcements with pagination
+GET http://localhost:3000/announcements?page=2
+
+### Get announcement by ID
+GET http://localhost:3000/announcements/1
+
+### Create announcement
+POST http://localhost:3000/announcements
+Content-Type: application/json
+
+{
+  "title": "Selling iPhone 12",
+  "description": "Good condition, 128GB, battery 90%",
+  "price": 350,
+  "category": "sale",
+  "contactInfo": "telegram: @robert"
+}
+
+### Update announcement
+PATCH http://localhost:3000/announcements/1
+Content-Type: application/json
+
+{
+  "price": 300
+}
+
+### Delete announcement
+DELETE http://localhost:3000/announcements/1
