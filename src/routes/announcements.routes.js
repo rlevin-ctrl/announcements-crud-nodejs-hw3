@@ -14,6 +14,8 @@ import {
     updateAnnouncementValidator,
 } from "../validators/announcements.validators.js";
 
+import { authenticate } from "../middleware/auth.middleware.js";
+
 const router = Router();
 
 /**
@@ -69,6 +71,8 @@ router.get("/:id", getByIdValidator, getAnnouncementById);
  * /announcements:
  *   post:
  *     summary: Create new announcement
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -101,14 +105,18 @@ router.get("/:id", getByIdValidator, getAnnouncementById);
  *     responses:
  *       201:
  *         description: Announcement created
+ *       401:
+ *         description: Unauthorized
  */
-router.post("/", createAnnouncementValidator, createAnnouncement);
+router.post("/", authenticate, createAnnouncementValidator, createAnnouncement);
 
 /**
  * @swagger
  * /announcements/{id}:
  *   patch:
  *     summary: Update announcement
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -139,16 +147,22 @@ router.post("/", createAnnouncementValidator, createAnnouncement);
  *     responses:
  *       200:
  *         description: Announcement updated
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *       404:
  *         description: Not found
  */
-router.patch("/:id", updateAnnouncementValidator, updateAnnouncement);
+router.patch("/:id", authenticate, updateAnnouncementValidator, updateAnnouncement);
 
 /**
  * @swagger
  * /announcements/{id}:
  *   delete:
  *     summary: Delete announcement
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -159,9 +173,13 @@ router.patch("/:id", updateAnnouncementValidator, updateAnnouncement);
  *     responses:
  *       204:
  *         description: Announcement deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *       404:
  *         description: Not found
  */
-router.delete("/:id", getByIdValidator, deleteAnnouncement);
+router.delete("/:id", authenticate, getByIdValidator, deleteAnnouncement);
 
 export default router;

@@ -1,4 +1,60 @@
-﻿### Get all announcements
+﻿@env=dev
+
+###############################################
+#                 AUTH                        #
+###############################################
+
+### Register user
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "username": "robert123",
+  "password": "qwerty123",
+  "name": "Robert"
+}
+
+### Login user (AUTO-SAVE TOKENS)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "username": "robert123",
+  "password": "qwerty123"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### Refresh token (AUTO-SAVE TOKENS)
+POST http://localhost:3000/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### Logout user
+POST http://localhost:3000/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### Get current user
+GET http://localhost:3000/auth/me
+Authorization: Bearer {{accessToken}}
+
+
+###############################################
+#            ANNOUNCEMENTS (PUBLIC)           #
+###############################################
+
+### Get all announcements
 GET http://localhost:3000/announcements
 
 ### Get announcements with search
@@ -13,8 +69,14 @@ GET http://localhost:3000/announcements?page=2
 ### Get announcement by ID
 GET http://localhost:3000/announcements/1
 
-### Create announcement
+
+###############################################
+#      ANNOUNCEMENTS (AUTH REQUIRED)          #
+###############################################
+
+### Create announcement (requires token)
 POST http://localhost:3000/announcements
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -25,13 +87,40 @@ Content-Type: application/json
   "contactInfo": "telegram: @robert"
 }
 
-### Update announcement
+### Try to create announcement WITHOUT token (should be 401)
+POST http://localhost:3000/announcements
+Content-Type: application/json
+
+{
+  "title": "Unauthorized test",
+  "description": "Should fail",
+  "price": 100,
+  "category": "sale",
+  "contactInfo": "none"
+}
+
+### Update announcement (your own)
 PATCH http://localhost:3000/announcements/1
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "price": 300
 }
 
-### Delete announcement
+### Try to update someone else's announcement (should be 403)
+PATCH http://localhost:3000/announcements/999
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "price": 123
+}
+
+### Delete announcement (your own)
 DELETE http://localhost:3000/announcements/1
+Authorization: Bearer {{accessToken}}
+
+### Try to delete someone else's announcement (should be 403)
+DELETE http://localhost:3000/announcements/999
+Authorization: Bearer {{accessToken}}

@@ -1,4 +1,5 @@
 ﻿import prisma from "../../prisma/client.js";
+import createHttpError from "http-errors";
 
 export const getAnnouncements = async (req, res) => {
     try {
@@ -9,9 +10,8 @@ export const getAnnouncements = async (req, res) => {
         const where = search
             ? {
                 OR: [
-                    { title: { contains: search } },
-                    { title: { contains: search.toLowerCase() } },
-                    { title: { contains: search.toUpperCase() } },
+                    { title: { contains: search, mode: "insensitive" } },
+                    { description: { contains: search, mode: "insensitive" } },
                 ],
             }
             : {};
@@ -60,8 +60,12 @@ export const getAnnouncementById = async (req, res) => {
 export const createAnnouncement = async (req, res) => {
     try {
         const announcement = await prisma.announcement.create({
-            data: req.body,
+            data: {
+                ...req.body,
+                userId: req.user.id, 
+            },
         });
+
         res.status(201).json(announcement);
     } catch (err) {
         console.error("CREATE ANNOUNCEMENT ERROR:", err);
@@ -72,24 +76,52 @@ export const createAnnouncement = async (req, res) => {
 export const updateAnnouncement = async (req, res) => {
     try {
         const id = Number(req.params.id);
-        const announcement = await prisma.announcement.update({
+
+        const existing = await prisma.announcement.findUnique({
+            where: { id },
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: "Announcement not found" });
+        }
+        
+        if (existing.userId !== req.user.id) {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        const updated = await prisma.announcement.update({
             where: { id },
             data: req.body,
         });
-        res.json(announcement);
+
+        res.json(updated);
     } catch (err) {
         console.error("UPDATE ANNOUNCEMENT ERROR:", err);
-        res.status(404).json({ error: "Announcement not found" });
+        res.status(500).json({ error: "Internal server error" });
     }
 };
 
 export const deleteAnnouncement = async (req, res) => {
     try {
         const id = Number(req.params.id);
+
+        const existing = await prisma.announcement.findUnique({
+            where: { id },
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: "Announcement not found" });
+        }
+        
+        if (existing.userId !== req.user.id) {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
         await prisma.announcement.delete({ where: { id } });
+
         res.status(204).end();
     } catch (err) {
         console.error("DELETE ANNOUNCEMENT ERROR:", err);
-        res.status(404).json({ error: "Announcement not found" });
+        res.status(500).json({ error: "Internal server error" });
     }
 };
